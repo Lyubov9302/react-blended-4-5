@@ -4,7 +4,7 @@ import { Post } from "../../types/post";
 interface PostListProps {
   posts: Post[];
   toggleModal: () => void;
-  toggleEditPost: (id: number) => void;
+  toggleEditPost: (post: Post) => void;
   onDelete: (id: number) => void;
 }
 
@@ -16,7 +16,7 @@ export default function PostList({ posts, toggleEditPost, onDelete }: PostListPr
           <h2 className={css.title}>{post.title}</h2>
           <p className={css.content}>{post.body}</p>
           <div className={css.footer}>
-            <button className={css.edit} onClick={() => toggleEditPost(post.id)}>
+            <button className={css.edit} onClick={() => toggleEditPost(post)}>
               Edit
             </button>
             <button className={css.delete} onClick={() => onDelete(post.id)}>

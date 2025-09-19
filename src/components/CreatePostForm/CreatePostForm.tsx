@@ -2,17 +2,12 @@ import * as Yup from "yup";
 import { Field, Form, Formik, ErrorMessage } from "formik";
 
 import css from "./CreatePostForm.module.css";
-import { Post } from "../../types/post";
+import { newPost } from "../../types/post";
 
 interface CreatePostFormProps {
   onClose: () => void;
-  onCreate: (newPost: Post) => void;
+  onCreate: (newPost: newPost) => void;
   isPending: boolean;
-}
-
-interface FormData {
-  title: string;
-  content: string;
 }
 
 const validationSchema = Yup.object().shape({
@@ -25,13 +20,13 @@ const validationSchema = Yup.object().shape({
     .max(500, "Текст поста повинен містити не більше 500 символів."),
 });
 
-const initialValues: FormData = {
+const initialValues: newPost = {
   title: "",
-  content: "",
+  body: "",
 };
 
 export default function CreatePostForm({ onClose, onCreate, isPending }: CreatePostFormProps) {
-  const onSubmit = (values: FormData) => {
+  const onSubmit = (values: newPost) => {
     onCreate(values);
   };
 
@@ -46,9 +41,9 @@ export default function CreatePostForm({ onClose, onCreate, isPending }: CreateP
           </div>
 
           <div className={css.formGroup}>
-            <label htmlFor="content">Текст</label>
-            <Field id="content" as="textarea" name="content" rows="8" className={css.textarea} />
-            <ErrorMessage name="content" component="span" className={css.error} />
+            <label htmlFor="body">Текст</label>
+            <Field id="body" as="textarea" name="body" rows="8" className={css.textarea} />
+            <ErrorMessage name="body" component="span" className={css.error} />
           </div>
 
           <div className={css.actions}>

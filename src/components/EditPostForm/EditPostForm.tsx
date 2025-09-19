@@ -1,5 +1,5 @@
 import * as Yup from "yup";
-import { ErrorMessage, Field, Form, Formik } from "formik";
+import { Field, Form, Formik, ErrorMessage } from "formik";
 import { Post } from "../../types/post";
 
 import css from "./EditPostForm.module.css";
@@ -13,7 +13,7 @@ interface EditPostFormProps {
 
 interface FormData {
   title: string;
-  body: string;
+  body: string; // Виправлено: використано "body" замість "content"
 }
 
 const validationSchema = Yup.object().shape({
@@ -21,7 +21,7 @@ const validationSchema = Yup.object().shape({
     .required("Заголовок обов'язковий.")
     .min(3, "Заголовок повинен містити щонайменше 3 символи.")
     .max(50, "Заголовок повинен містити не більше 50 символів."),
-  content: Yup.string()
+  body: Yup.string() // Виправлено: валідуємо "body", а не "content"
     .required("Текст поста обов'язковий.")
     .max(500, "Текст поста повинен містити не більше 500 символів."),
 });
@@ -52,9 +52,9 @@ export default function EditPostForm({ onClose, onUpdate, post, isPending }: Edi
           </div>
 
           <div className={css.formGroup}>
-            <label htmlFor="content">Текст</label>
-            <Field id="content" as="textarea" name="content" rows={8} className={css.textarea} />
-            <ErrorMessage name="content" component="span" className={css.error} />
+            <label htmlFor="body">Текст</label>
+            <Field id="body" as="textarea" name="body" rows={8} className={css.textarea} />
+            <ErrorMessage name="body" component="span" className={css.error} />
           </div>
 
           <div className={css.actions}>
