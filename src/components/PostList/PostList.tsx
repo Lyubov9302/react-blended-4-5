@@ -8,7 +8,12 @@ interface PostListProps {
   onDelete: (id: number) => void;
 }
 
-export default function PostList({ posts, toggleEditPost, onDelete }: PostListProps) {
+export default function PostList({ posts, toggleEditPost, toggleModal, onDelete }: PostListProps) {
+  const handleEditPost = (post: Post) => {
+    toggleModal();
+    toggleEditPost(post);
+  };
+
   return (
     <ul className={css.list}>
       {posts.map((post) => (
@@ -16,7 +21,7 @@ export default function PostList({ posts, toggleEditPost, onDelete }: PostListPr
           <h2 className={css.title}>{post.title}</h2>
           <p className={css.content}>{post.body}</p>
           <div className={css.footer}>
-            <button className={css.edit} onClick={() => toggleEditPost(post)}>
+            <button className={css.edit} onClick={() => handleEditPost(post)}>
               Edit
             </button>
             <button className={css.delete} onClick={() => onDelete(post.id)}>

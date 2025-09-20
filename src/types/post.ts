@@ -5,12 +5,8 @@ export interface Post {
   body: string;
 }
 
-export interface newPost {
-  title: string;
-  body: string;
-}
-
-export interface newDataPost {
+export interface PostFormData {
+  id?: number;
   title: string;
   body: string;
 }
