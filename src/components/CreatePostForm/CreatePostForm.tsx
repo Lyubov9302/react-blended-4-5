@@ -1,61 +1,75 @@
-import * as Yup from "yup";
-import { Field, Form, Formik, ErrorMessage } from "formik";
-
+// styles
 import css from "./CreatePostForm.module.css";
-import { newPost } from "../../types/post";
+// types
+import { FormData } from "../../types/formData";
+// services
+import { createPost } from "../../services/postService";
+// libraries
+import { Field, Form, Formik, FormikHelpers, ErrorMessage } from "formik";
+import * as Yup from "yup";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 interface CreatePostFormProps {
   onClose: () => void;
-  onCreate: (newPost: newPost) => void;
-  isPending: boolean;
 }
 
-const validationSchema = Yup.object().shape({
-  title: Yup.string()
-    .required("Заголовок обов'язковий.")
-    .min(3, "Заголовок повинен містити щонайменше 3 символи.")
-    .max(50, "Заголовок повинен містити не більше 50 символів."),
-  content: Yup.string()
-    .required("Текст поста обов'язковий.")
-    .max(500, "Текст поста повинен містити не більше 500 символів."),
-});
-
-const initialValues: newPost = {
+const defaultValue: FormData = {
   title: "",
   body: "",
 };
 
-export default function CreatePostForm({ onClose, onCreate, isPending }: CreatePostFormProps) {
-  const onSubmit = (values: newPost) => {
-    onCreate(values);
-  };
+const OrderSchema = Yup.object().shape({
+  title: Yup.string()
+    .min(3, "Title must be at least 3 characters")
+    .max(50, "Title must be at most 50 characters")
+    .required("Title is required"),
+  body: Yup.string()
+    .max(500, "Content must be at most 500 characters")
+    .required("Content is required"),
+});
+
+export default function CreatePostForm({ onClose }: CreatePostFormProps) {
+  const queryClient = useQueryClient();
+
+  const createNewPost = useMutation({
+    mutationFn: (newPost: FormData) => createPost(newPost),
+    onSuccess() {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      alert("Post created successfully!");
+      onClose();
+    },
+  });
+
+  function handleSubmit(values: FormData, formikHelpers: FormikHelpers<FormData>) {
+    createNewPost.mutate(values, {
+      onSuccess: () => formikHelpers.resetForm(),
+    });
+  }
 
   return (
-    <Formik initialValues={initialValues} onSubmit={onSubmit} validationSchema={validationSchema}>
-      {({ isSubmitting }) => (
-        <Form className={css.form}>
-          <div className={css.formGroup}>
-            <label htmlFor="title">Заголовок</label>
-            <Field id="title" type="text" name="title" className={css.input} />
-            <ErrorMessage name="title" component="span" className={css.error} />
-          </div>
+    <Formik initialValues={defaultValue} onSubmit={handleSubmit} validationSchema={OrderSchema}>
+      <Form className={css.form}>
+        <div className={css.formGroup}>
+          <label htmlFor="title">Title</label>
+          <Field id="title" type="text" name="title" className={css.input} />
+          <ErrorMessage name="title" component="span" className={css.error} />
+        </div>
 
-          <div className={css.formGroup}>
-            <label htmlFor="body">Текст</label>
-            <Field id="body" as="textarea" name="body" rows="8" className={css.textarea} />
-            <ErrorMessage name="body" component="span" className={css.error} />
-          </div>
+        <div className={css.formGroup}>
+          <label htmlFor="body">Content</label>
+          <Field id="body" as="textarea" name="body" rows="8" className={css.textarea} />
+          <ErrorMessage name="body" component="span" className={css.error} />
+        </div>
 
-          <div className={css.actions}>
-            <button type="button" className={css.cancelButton} onClick={onClose}>
-              Скасувати
-            </button>
-            <button type="submit" className={css.submitButton} disabled={isPending || isSubmitting}>
-              {isPending ? "Створення..." : "Створити пост"}
-            </button>
-          </div>
-        </Form>
-      )}
+        <div className={css.actions}>
+          <button onClick={onClose} type="button" className={css.cancelButton}>
+            Cancel
+          </button>
+          <button type="submit" className={css.submitButton} disabled={createNewPost.isPending}>
+            Create post
+          </button>
+        </div>
+      </Form>
     </Formik>
   );
 }

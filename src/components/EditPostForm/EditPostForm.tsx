@@ -1,72 +1,82 @@
-import * as Yup from "yup";
-import { Field, Form, Formik, ErrorMessage } from "formik";
-import { Post } from "../../types/post";
-
+// styles
 import css from "./EditPostForm.module.css";
+// types
+import { FormData } from "../../types/formData";
+import { Post, UpdateDataPost } from "../../types/post";
+// services
+import { editPost } from "../../services/postService";
+// libraries
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import * as Yup from "yup";
+import { ErrorMessage, Field, Form, Formik, FormikHelpers } from "formik";
 
 interface EditPostFormProps {
   onClose: () => void;
-  onUpdate: (updatedPost: Post) => void;
-  post: Post;
-  isPending: boolean;
+  selectedPost: Post;
 }
 
-interface FormData {
-  title: string;
-  body: string; // Виправлено: використано "body" замість "content"
-}
-
-const validationSchema = Yup.object().shape({
+const OrderSchema = Yup.object().shape({
   title: Yup.string()
-    .required("Заголовок обов'язковий.")
-    .min(3, "Заголовок повинен містити щонайменше 3 символи.")
-    .max(50, "Заголовок повинен містити не більше 50 символів."),
-  body: Yup.string() // Виправлено: валідуємо "body", а не "content"
-    .required("Текст поста обов'язковий.")
-    .max(500, "Текст поста повинен містити не більше 500 символів."),
+    .min(3, "Title must be at least 3 characters")
+    .max(50, "Title must be at most 50 characters")
+    .required("Title is required"),
+  body: Yup.string()
+    .max(500, "Content must be at most 500 characters")
+    .required("Content is required"),
 });
 
-export default function EditPostForm({ onClose, onUpdate, post, isPending }: EditPostFormProps) {
-  const initialValues: FormData = {
-    title: post.title,
-    body: post.body,
+export default function EditPostForm({ onClose, selectedPost }: EditPostFormProps) {
+  const queryClient = useQueryClient();
+
+  const defaultValue: FormData = {
+    title: selectedPost.title,
+    body: selectedPost.body,
   };
 
-  const onSubmit = (values: FormData) => {
-    const updatedPost = {
-      ...post,
-      title: values.title,
-      body: values.body,
+  const editPostMutate = useMutation({
+    mutationFn: (newPost: UpdateDataPost) => editPost(newPost),
+    onSuccess() {
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      alert("Post edited successfully!");
+      onClose();
+    },
+  });
+
+  function handleSubmit(values: FormData, formikHelpers: FormikHelpers<FormData>) {
+    const newPost: UpdateDataPost = {
+      ...values,
+      id: selectedPost.id,
     };
-    onUpdate(updatedPost);
-  };
+
+    editPostMutate.mutate(newPost, {
+      onSuccess: () => formikHelpers.resetForm(),
+    });
+  }
 
   return (
-    <Formik initialValues={initialValues} onSubmit={onSubmit} validationSchema={validationSchema}>
-      {({ isSubmitting }) => (
-        <Form className={css.form}>
-          <div className={css.formGroup}>
-            <label htmlFor="title">Заголовок</label>
-            <Field id="title" type="text" name="title" className={css.input} />
-            <ErrorMessage name="title" component="span" className={css.error} />
-          </div>
+    <Formik initialValues={defaultValue} onSubmit={handleSubmit} validationSchema={OrderSchema}>
+      <Form className={css.form}>
+        <div className={css.formGroup}>
+          <label htmlFor="title">Title</label>
+          <Field id="title" type="text" name="title" className={css.input} />
+          <ErrorMessage name="title" component="span" className={css.error} />
+        </div>
 
-          <div className={css.formGroup}>
-            <label htmlFor="body">Текст</label>
-            <Field id="body" as="textarea" name="body" rows={8} className={css.textarea} />
-            <ErrorMessage name="body" component="span" className={css.error} />
-          </div>
+        <div className={css.formGroup}>
+          <label htmlFor="body">Content</label>
+          <Field id="body" as="textarea" name="body" rows={8} className={css.textarea} />
+          <ErrorMessage name="body" component="span" className={css.error} />
+        </div>
 
-          <div className={css.actions}>
-            <button type="button" className={css.cancelButton} onClick={onClose}>
-              Скасувати
-            </button>
-            <button type="submit" className={css.submitButton} disabled={isPending || isSubmitting}>
-              {isPending ? "Оновлення..." : "Оновити пост"}
-            </button>
-          </div>
-        </Form>
-      )}
+        <div className={css.actions}>
+          <button onClick={onClose} type="button" className={css.cancelButton}>
+            Cancel
+          </button>
+          <button type="submit" className={css.submitButton} disabled={editPostMutate.isPending}>
+            Edit post
+          </button>
+        </div>
+      </Form>
     </Formik>
   );
 }

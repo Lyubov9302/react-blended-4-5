@@ -1,96 +1,95 @@
+// components
 import Modal from "../Modal/Modal";
 import PostList from "../PostList/PostList";
 import SearchBox from "../SearchBox/SearchBox";
 import Pagination from "../Pagination/Pagination";
-
-import css from "./App.module.css";
-import toast, { Toaster } from "react-hot-toast";
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { createPost, deletePost, editPost, fetchPosts } from "../../services/postService";
-import { Post } from "../../types/post";
-import { useState } from "react";
-import { useDebouncedCallback } from "use-debounce";
-import EditPostForm from "../EditPostForm/EditPostForm";
 import CreatePostForm from "../CreatePostForm/CreatePostForm";
+import EditPostForm from "../EditPostForm/EditPostForm";
+// styles
+import css from "./App.module.css";
+// services
+import { fetchPosts } from "../../services/postService";
+// types
+import { Post } from "../../types/post";
+// libraries
+import { useState } from "react";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
+import { useDebouncedCallback } from "use-debounce";
 
 export default function App() {
-  const queryClient = useQueryClient();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [postToEdit, setPostToEdit] = useState<Post | null>(null);
-  const [searchValue, setSearchValue] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreatePost, setIsCreatePost] = useState(false);
+  const [isEditPost, setIsEditPost] = useState(false);
+  const [editedPost, setEditedPost] = useState<Post | null>(null);
 
-  const debouncedSetSearchValue = useDebouncedCallback((val: string) => {
-    setSearchValue(val);
-  }, 300);
-
-  const { data, isLoading, isError, isSuccess } = useQuery({
-    queryKey: ["posts", debouncedSetSearchValue, currentPage],
-    queryFn: () => fetchPosts(debouncedSetSearchValue, currentPage),
+  const { data, isSuccess } = useQuery({
+    queryKey: ["posts", searchQuery, currentPage],
+    queryFn: () => fetchPosts(searchQuery, currentPage),
     placeholderData: keepPreviousData,
   });
 
-  const toggleModal = () => {
-    setIsModalOpen(!isModalOpen);
-  };
+  const totalPages = Math.ceil(Number(data?.totalPosts) / 8) || 0;
 
-  const handleEdit = (post: Post) => {
-    setPostToEdit(post);
-  };
+  function modalOpen(formType: string) {
+    setIsModalOpen(true);
 
-  const handleCreate = (newPost: Post) => {
-    createMutation.mutate(newPost);
-    toggleModal();
-  };
+    if (formType === "create") {
+      setIsCreatePost(true);
+    }
 
-  const perPage = 8;
-  const totalPages = data ? Math.ceil(data.totalCount / perPage) : 0;
+    if (formType === "edit") {
+      setIsEditPost(true);
+    }
+  }
+
+  function modalClose() {
+    setIsModalOpen(false);
+
+    if (isCreatePost) {
+      setIsCreatePost(false);
+    }
+
+    if (isEditPost) {
+      setIsEditPost(false);
+      setEditedPost(null);
+    }
+  }
+
+  const handleSearch = useDebouncedCallback((value: string) => {
+    setSearchQuery(value);
+    setCurrentPage(1);
+  }, 300);
 
   return (
-    <>
-      <div className={css.app}>
-        <header className={css.toolbar}>
-          <SearchBox value={searchValue} onSearch={handleSearch} />
-          {totalPages > 1 && (
-            <Pagination
-              totalPages={totalPages}
-              currentPage={currentPage}
-              onPageChange={setCurrentPage}
-            />
-          )}
-          <button className={css.button} onClick={handleCreateButtonClick}>
-            Create post
-          </button>
-        </header>
-        {isModalOpen && (
-          <Modal onClose={toggleModal}>
-            {postToEdit ? (
-              <EditPostForm
-                post={postToEdit}
-                onClose={toggleModal}
-                onUpdate={handleUpdate}
-                isPending={editMutation.isPending}
-              />
-            ) : (
-              <CreatePostForm
-                onClose={toggleModal}
-                onCreate={handleCreate}
-                isPending={createMutation.isPending}
-              />
-            )}
-          </Modal>
-        )}
-        {isLoading && <p>Завантаження постів...</p>}
-        {isError && <p>Помилка завантаження постів.</p>}
-        {data !== undefined && data?.posts?.length > 0 && (
-          <PostList
-            posts={data.posts}
-            toggleEditPost={handleEdit}
-            toggleModal={() => toggleModal()}
+    <div className={css.app}>
+      <header className={css.toolbar}>
+        <SearchBox value={searchQuery} onSearch={handleSearch} />
+        {isSuccess && totalPages > 1 && (
+          <Pagination
+            totalPages={totalPages}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
           />
         )}
-      </div>
-      <Toaster />
-    </>
+        <button onClick={() => modalOpen("create")} className={css.button}>
+          Create post
+        </button>
+      </header>
+      {isModalOpen && (
+        <Modal onClose={modalClose}>
+          {isCreatePost && <CreatePostForm onClose={modalClose} />}
+          {isEditPost && <EditPostForm onClose={modalClose} selectedPost={editedPost as Post} />}
+        </Modal>
+      )}
+      {data && (
+        <PostList
+          posts={data.posts}
+          toggleModal={() => modalOpen("edit")}
+          toggleEditPost={setEditedPost}
+        />
+      )}
+    </div>
   );
 }
