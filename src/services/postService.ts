@@ -1,6 +1,6 @@
 import axios from "axios";
 import { Post, UpdateDataPost } from "../types/post";
-import { FormData } from "../types/post";
+import { FormData } from "../types/formData";
 
 axios.defaults.baseURL = "https://jsonplaceholder.typicode.com";
 

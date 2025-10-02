@@ -8,5 +8,5 @@ export interface Post {
 export interface UpdateDataPost {
   title: string;
   body: string;
-  id?: number;
+  id: number;
 }
