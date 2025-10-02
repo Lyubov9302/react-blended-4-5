@@ -1,7 +1,7 @@
 // styles
 import css from "./EditPostForm.module.css";
 // types
-import { FormData } from "../../types/post";
+import { FormData } from "../../types/formData";
 import { Post, UpdateDataPost } from "../../types/post";
 // services
 import { editPost } from "../../services/postService";

@@ -8,10 +8,5 @@ export interface Post {
 export interface UpdateDataPost {
   title: string;
   body: string;
-  id: number;
-}
-
-export interface FormData {
-  title: string;
-  body: string;
+  id?: number;
 }

@@ -1,7 +1,7 @@
 // styles
 import css from "./CreatePostForm.module.css";
 // types
-import { FormData } from "../../types/post";
+import { FormData } from "../../types/formData";
 // services
 import { createPost } from "../../services/postService";
 // libraries
